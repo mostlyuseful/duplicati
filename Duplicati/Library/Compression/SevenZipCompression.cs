@@ -19,6 +19,7 @@ namespace Duplicati.Library.Compression
         private master._7zip.Legacy.ArchiveReader m_reader;
         private master._7zip.Legacy.CArchiveDatabaseEx m_archive;
         private int m_threadCount;
+        private int m_compressionLevel;
         private bool m_lowOverheadMode;
 
         /// <summary>
@@ -69,6 +70,24 @@ namespace Duplicati.Library.Compression
                     threadCountValue = MAX_THREAD_COUNT;
 
                 m_threadCount = threadCountValue;
+            }
+            string compressionLevelSetting;
+            int compressionLevelValue;
+            if (options != null
+               && options.TryGetValue(COMPRESSION_LEVEL_OPTION, out compressionLevelSetting)
+               && Int32.TryParse(compressionLevelSetting, out compressionLevelValue))
+            {
+                if (compressionLevelValue < 0)
+                {
+                    compressionLevelValue = 0;
+                }
+                else if (compressionLevelValue > 9)
+                {
+                    compressionLevelValue = 9;
+                }
+                m_compressionLevel = compressionLevelValue;
+            } else {
+                m_compressionLevel = DEFAULT_COMPRESSION_LEVEL;
             }
 
             var file = new FileInfo(filename);
@@ -254,15 +273,17 @@ namespace Duplicati.Library.Compression
                     if (m_lowOverheadMode)
                     {
                         var encoderProps = ManagedLzma.LZMA.Master.LZMA.CLzmaEncProps.LzmaEncProps_Init();
+                        // the normalize function transforms level values to encoder properties
+                        encoderProps.mLevel = m_compressionLevel;
                         encoderProps.LzmaEncProps_Normalize();
-                        // @todo apply compression settings
                         m_lzma2Encoder = new ManagedLzma.LZMA.Master.SevenZip.ArchiveWriter.LzmaEncoder(encoderProps);
                     }
                     else{
                         var encoderProps = new ManagedLzma.LZMA.Master.LZMA.CLzma2EncProps();
                         encoderProps.Lzma2EncProps_Init();
+                        // the normalize function transforms level values to encoder properties
+                        encoderProps.mLzmaProps.mLevel = m_compressionLevel;
                         encoderProps.Lzma2EncProps_Normalize();
-                        // @todo apply compression settings
                         m_lzma2Encoder = new ManagedLzma.LZMA.Master.SevenZip.ArchiveWriter.Lzma2Encoder(m_threadCount, encoderProps);
                     }
 
@@ -340,12 +361,12 @@ namespace Duplicati.Library.Compression
         }
 
         /// <summary>
-        /// The commandline option for toggling the compression level
+        /// The commandline option for setting the encoder thread count
         /// </summary>
         private const string THREAD_COUNT_OPTION = "lzma-thread-count";
 
         /// <summary>
-        /// The default compression level
+        /// The default encoder thread count
         /// </summary>
         private static readonly int DEFAULT_THREAD_COUNT = Environment.ProcessorCount;
 
@@ -353,6 +374,26 @@ namespace Duplicati.Library.Compression
         /// Arbitrary limit to avoid problems with unreasonable user input.
         /// </summary>
         private const int MAX_THREAD_COUNT = 64;
+
+        /// <summary>
+        /// The commandline option for setting the LZMA compression level
+        /// </summary>
+        private const string COMPRESSION_LEVEL_OPTION = "lzma-level";
+
+        /// <summary>
+        /// The default LZMA compression level
+        /// </summary>
+        private const int DEFAULT_COMPRESSION_LEVEL = 5;
+
+        /// <summary>
+        /// The minimum LZMA compression level
+        /// </summary>
+        private const int MIN_COMPRESSION_LEVEL = 0; 
+
+        /// <summary>
+        /// The maximum LZMA compression level
+        /// </summary>
+        private const int MAX_COMPRESSION_LEVEL = 9;
 
         public IList<ICommandLineArgument> SupportedCommands
         {
@@ -364,7 +405,12 @@ namespace Duplicati.Library.Compression
                         CommandLineArgument.ArgumentType.Integer,
                         Strings.SevenZipCompression.ThreadcountShort,
                         Strings.SevenZipCompression.ThreadcountLong,
-                        DEFAULT_THREAD_COUNT.ToString())
+                        DEFAULT_THREAD_COUNT.ToString()),
+                    new CommandLineArgument(COMPRESSION_LEVEL_OPTION,
+                        CommandLineArgument.ArgumentType.Integer,
+                        Strings.SevenZipCompression.CompressionLevelShort,
+                        Strings.SevenZipCompression.CompressionLevelLong,
+                        DEFAULT_COMPRESSION_LEVEL.ToString())
                 };
             }
         }

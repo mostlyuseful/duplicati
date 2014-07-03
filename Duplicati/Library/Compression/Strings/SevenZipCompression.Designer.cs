@@ -87,5 +87,17 @@ namespace Duplicati.Library.Compression.Strings {
                 return ResourceManager.GetString("NoWriterError", resourceCulture);
             }
         }
+
+        internal static string CompressionLevelShort {
+            get {
+                return ResourceManager.GetString("CompressionLevelShort", resourceCulture);
+            }
+        }
+
+        internal static string CompressionLevelLong {
+            get {
+                return ResourceManager.GetString("CompressionLevelLong", resourceCulture);
+            }
+        }
     }
 }

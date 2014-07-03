@@ -138,4 +138,10 @@
   <data name="ThreadcountShort" xml:space="preserve">
     <value>Number of threads used in compression</value>
   </data>
+  <data name="CompressionLevelShort" xml:space="preserve">
+    <value>Compression level</value>
+  </data>
+  <data name="CompressionLevelLong" xml:space="preserve">
+    <value>LZMA compression level from 0 (store, fastest) to 9 (best, slowest)</value>
+  </data>
 </root>
