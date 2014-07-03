@@ -249,12 +249,22 @@ namespace Duplicati.Library.Compression
 
             if(hint != CompressionHint.Noncompressible)
             {
-                if(m_lzma2Encoder == null)
+                if (m_lzma2Encoder == null)
                 {
-                    if(m_lowOverheadMode)
-                        m_lzma2Encoder = new ManagedLzma.LZMA.Master.SevenZip.ArchiveWriter.LzmaEncoder();
-                    else
-                        m_lzma2Encoder = new ManagedLzma.LZMA.Master.SevenZip.ArchiveWriter.Lzma2Encoder(m_threadCount);
+                    if (m_lowOverheadMode)
+                    {
+                        var encoderProps = ManagedLzma.LZMA.Master.LZMA.CLzmaEncProps.LzmaEncProps_Init();
+                        encoderProps.LzmaEncProps_Normalize();
+                        // @todo apply compression settings
+                        m_lzma2Encoder = new ManagedLzma.LZMA.Master.SevenZip.ArchiveWriter.LzmaEncoder(encoderProps);
+                    }
+                    else{
+                        var encoderProps = new ManagedLzma.LZMA.Master.LZMA.CLzma2EncProps();
+                        encoderProps.Lzma2EncProps_Init();
+                        encoderProps.Lzma2EncProps_Normalize();
+                        // @todo apply compression settings
+                        m_lzma2Encoder = new ManagedLzma.LZMA.Master.SevenZip.ArchiveWriter.Lzma2Encoder(m_threadCount, encoderProps);
+                    }
 
                     m_lzma2Encoder.OnOutputThresholdReached += mLzma2Encoder_OnOutputThresholdReached;
                     m_lzma2Encoder.SetOutputThreshold(kStreamThreshold);
