@@ -37,7 +37,7 @@ namespace Duplicati.Server.Serialization
             {
                 DayOfWeek v = (DayOfWeek)value;
             
-                switch ((DayOfWeek)value)
+                switch (v)
                 {
                     case DayOfWeek.Monday:
                         writer.WriteValue("mon");
